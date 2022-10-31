@@ -3,7 +3,7 @@
 with lib;
 
 let
-  zigBinaries = import ./zig-binary.nix { inherit pkgs; };
+  zigBinaries = import ./binaries.nix { inherit pkgs; };
   matrix = if zigVersion != null && zigVersion != (toString null) then [
     (import <nixpkgs> { overlays = [(import ./overlay.nix { inherit allowBroken; zig = zigBinaries."${zigVersion}"; })]; })
   ] else [

@@ -1,31 +1,16 @@
-{ zig ? null, static ? true, allowBroken ? false }:
+{ zig ? null, static ? true, allowBroken ? false } @args:
 
 with builtins;
 
 pkgs: super: with pkgs.lib; let
-  _zig = if zig != null then zig else super.zig;
-  targets = with pkgs; with lib; let
-    zig-targets = (fromJSON (readFile (runCommand "targets" {} ''${_zig}/bin/zig targets > $out''))).libc;
-    map-target = x: let
-      splitted = splitString "-" x;
-      kernel-map = {
-        freestanding = y: "${head y}-unknown-none-${last y}";
-        linux = y: "${head y}-unknown-linux-${last y}";
-        macos = y: "${head y}-apple-darwin";
-        windows = y: "${head y}-w64-mingw32";
-        wasi = y: "${head y}-unknown-wasi";
-      };
-      cpu-map = {
-        powerpc64 = y: "${y}abi64";
-        sparcv9 = y: "sparc64-${removePrefix "sparcv9-" y}";
-        thumb = y: "armv5tel-${removePrefix "thumb-" y}";
-        armeb = y: "broken";
-        csky = y: "broken";
-      };
-    in cpu-map."${head splitted}" or (_: _) (kernel-map."${elemAt splitted 1}" splitted);
+  utils = import ./src/utils.nix { inherit (pkgs) lib; };
+  zig = if args.zig != null then args.zig else super.zig;
+
+  targets = let
+    zig-targets = with pkgs; (fromJSON (readFile (runCommand "targets" {} ''${zig}/bin/zig targets > $out''))).libc;
 
     # TODO: automate these for each zig version with github actions
-    broken = if allowBroken then [ "broken" ] else ([
+    broken = if args.allowBroken then [] else ([
       # error: container 'std.os.linux' has no member called 'syscall3'
       # https://github.com/ziglang/zig/issues/8020
       "mips64-unknown-linux-musl"
@@ -74,12 +59,16 @@ pkgs: super: with pkgs.lib; let
       "wasm32-unknown-none-musl"
 
       # Not supported by nixpkgs/systems/parse.nix
+      "csky-unknown-linux-gnueabi"
+      "csky-unknown-linux-gnueabihf"
       "x86_64-unknown-linux-gnux32"
-      "broken"
-    ] ++ optionals (_zig.isMasterBuild or false) [
+      "armeb-unknown-linux-gnueabi"
+      "armeb-unknown-linux-musleabi"
+      "armeb-unknown-linux-gnueabihf"
+      "armeb-unknown-linux-musleabihf"
+      "armeb-w64-mingw32"
+    ] ++ optionals (zig.isMasterBuild or false) [
       "armv5tel-unknown-linux-musleabihf"
-      "aarch64-apple-darwin"
-      "x86_64-apple-darwin"
       # ld.lld: error: relocation R_386_PC32 cannot be used against symbol '__gehf2'; recompile with -fPIC
       "i386-unknown-linux-gnu"
       "i386-unknown-linux-musl"
@@ -88,9 +77,9 @@ pkgs: super: with pkgs.lib; let
       # undefined symbol: _tls_index
       "i386-w64-mingw32"
     ]);
-  in filter (x: !(any (y: x == y) broken)) (map map-target zig-targets);
+  in filter (x: !(any (y: x == y) broken)) (map utils.zigTargetToNixTarget zig-targets);
 in {
-  zig = _zig;
-  zigCross = pkgs.lib.genAttrs targets (target: (import ./default.nix { inherit pkgs target static; zig = _zig; }).pkgs);
-  zigBinaries = import ./zig-binary.nix { inherit pkgs; };
+  inherit zig;
+  zigCross = genAttrs targets (target: (import ./default.nix { inherit pkgs target static zig; }).pkgs);
+  zigBinaries = import ./binaries.nix { inherit pkgs; };
 }
