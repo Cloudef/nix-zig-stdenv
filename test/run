@@ -1,7 +1,10 @@
 #!/bin/bash
+# shellcheck disable=SC2059
 
 hash nix nix-build jq
 set -euo pipefail
+
+scriptdir="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)"
 
 testdir="${TESTDIR:-result}"
 rm -rf "$testdir"
@@ -14,13 +17,15 @@ w='\033[0;37m'
 eval-and-report() {
    local name="$1" zig_version="$2" target="$3"
    local desc="$zig_version-$target-$name"
-   local path="$(mktemp)"
-   local res="$(mktemp)"
+   local path res
+   path="$(mktemp)"
+   res="$(mktemp)"
    shift 3
    if "$@" 1>"$res" 2>"$path"; then
-      local out="$(cat "$res")"
-      local exe="$(find "$out/" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -print -quit)"
-      local fmt="$(file "$exe" | awk -F':' '{print $2}')"
+      local out exe fmt
+      out="$(cat "$res")"
+      exe="$(find "$out/" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -print -quit)"
+      fmt="$(file "$exe" | awk -F':' '{print $2}')"
       printf -- "[$g OK $c] ${w}%s${c}\n" "$desc"
       printf -- "      ${w}%s${c}\n" "$fmt"
       rm -f "$path" "$res"
@@ -34,9 +39,7 @@ eval-and-report() {
 
 dump() {
    printf -- "${w}%s:${c}\n" "$1"
-   printf -- "${r}"
-   cat "$testdir/$1" | sed "s/^/> /"
-   printf -- "${c}"
+   sed "s/^/> /" "$testdir/$1"
 }
 
 dump-failed() {
@@ -55,19 +58,19 @@ dump-failed() {
 }
 
 list-versions() {
-   nix eval --json -f default.nix list-versions | jq -r '.[]'
+   nix eval --json -f "$scriptdir/default.nix" list-versions | jq -r '.[]'
 }
 
 install-version() {
-   eval-and-report "zig" "$1" "native" nix-build --no-out-link -A install-version --argstr version "$1"
+   eval-and-report "zig" "$1" "native" nix-build "$scriptdir/default.nix" --no-out-link -A install-version --argstr version "$1"
 }
 
 list-targets() {
-   nix eval --json -f default.nix zigVersions."\"$1\"".pkgs --apply builtins.attrNames | jq -r '.[]'
+   nix eval --json -f "$scriptdir/default.nix" zigVersions."\"$1\"".pkgs --apply builtins.attrNames | jq -r '.[]'
 }
 
 build-package() {
-   eval-and-report "$3" "$1" "$2" nix-build --no-out-link -A zigVersions."\"$1\"".pkgs."\"$2\"".\"$3\"
+   eval-and-report "$3" "$1" "$2" nix-build "$scriptdir/default.nix" --no-out-link -A zigVersions."\"$1\".pkgs.\"$2\".\"$3\""
 }
 
 build-package-for-all-targets() {
