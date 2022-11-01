@@ -1,11 +1,11 @@
-{ lib, writeShellScript }:
+{ lib, writeShellScript, symlinkJoin }:
 
 with lib;
 
-drv: wrappers: let
+drvs: wrappers: let
   mapped = map (x: { wrapper = writeShellScript "wrapper" x.script; path = x.path; }) wrappers;
 in symlinkJoin {
-  name = "${drv.name}-wrapped";
-  paths = [ drv ];
-  postBuild = concatStringsSep "\n" (flatten (map (x: [ "rm $out/${x.path}" "ln -s ${x.wrapper} $out/${x.path}" ]) mapped));
+  name = "${(head drvs).name}-wrapped";
+  paths = drvs;
+  postBuild = concatStringsSep "\n" (flatten (map (x: [ "rm -f $out/${x.path}" "ln -s ${x.wrapper} $out/${x.path}" ]) mapped));
 }

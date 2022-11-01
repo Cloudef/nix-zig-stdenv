@@ -27,12 +27,23 @@ let
 
   wrapper = import ./src/wrapper.nix {
     inherit lib;
+    inherit (pkgs) writeShellScript symlinkJoin;
+  };
+
+  rust-wrapper = import ./src/rust-support.nix {
+    inherit lib wrapper static;
     inherit (pkgs) writeShellScript;
   };
 
-  wrapRustToolchain = import ./src/rust-support.nix {
-    inherit lib wrapper static;
-    inherit (pkgs) writeShellScript;
+  # FIXME: get rid of this, used only to refer to local zig cc
+  local0 = import pkgs.path {
+    inherit localSystem config;
+    crossSystem = localSystem;
+    stdenvStages = import ./src/stdenv.nix {
+      inherit (pkgs) path;
+      inherit (pkgs.llvmPackages) llvm;
+      inherit utils zig;
+    };
   };
 
   # Used to compile and install compatibility packages
@@ -56,14 +67,7 @@ let
 
     # TODO: check if any of these are needed anymore
     overlays = [(self: super: {
-      # rust = wrapRustToolchain super.rust pkgs.stdenv.cc local-system.config cross-system.config;
-
-      # cmake sucks at picking up the right compiler ...
-      # probably darwin only issue, as the host cc also seems to leak sometimes (impurity)
-      # cmake = wrapper super.cmake [{
-      #   wrapper = ''${super.cmake}/bin/cmake "$@" -DCMAKE_C_COMPILER=${zig-stdenv.cc}/bin/cc -DCMAKE_CXX_COMPILER=${zig-stdenv.cc}/bin/c++'';
-      #   path = "bin/cmake";
-      # }];
+      rust = rust-wrapper super.rust local0.stdenv.cc localSystem.config super.stdenv.cc crossSystem.config;
     })] ++ overlays;
 
     crossOverlays = [(self: super: {
@@ -81,7 +85,8 @@ let
     })] ++ crossOverlays;
   };
 in {
-  inherit target;
   inherit (cross-env) stdenv;
+  target = crossSystem.config;
   pkgs = cross-env;
+  wrapRustToolchain = toolchain: rust-wrapper toolchain local0.stdenv.cc localSystem.config cross-env.stdenv.cc crossSystem.config;
 }
