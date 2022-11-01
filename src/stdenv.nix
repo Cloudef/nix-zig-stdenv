@@ -66,7 +66,7 @@ in lib.init bootStages ++ [
       targetPkgs = cross0;
     };
   in {
-    inherit config;
+    config = config // { allowUnsupportedSystem = true; };
     overlays = overlays ++ crossOverlays;
     selfBuild = false;
     stdenv = adaptStdenv (buildPackages.stdenv.override (old: rec {
