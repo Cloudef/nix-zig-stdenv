@@ -86,8 +86,8 @@ pkgs: super: with pkgs.lib; let
     import-target-pkgs = target: (import ./default.nix {
       inherit pkgs zig;
       inherit (pkgs) config overlays;
-      target = removeSuffix "-static" target;
       static = hasSuffix "-static" target;
+      target = removeSuffix "-static" target;
     }).pkgs;
   in genAttrs (targets ++ static-targets) import-target-pkgs;
 in {
