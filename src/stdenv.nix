@@ -27,6 +27,7 @@ in lib.init bootStages ++ [
   # First replace native compiler with zig
   # This gives us more deterministic environment
   (buildPackages: let
+    adaptStdenv = if crossSystem.isStatic then buildPackages.stdenvAdapters.makeStatic else id;
     zigToolchain = import ./toolchain.nix {
       inherit (buildPackages) wrapCCWith wrapBintoolsWith;
       inherit (buildPackages) writeShellScript emptyFile gnugrep coreutils;
@@ -39,7 +40,7 @@ in lib.init bootStages ++ [
     inherit overlays;
     config = config // { allowUnsupportedSystem = true; };
     selfBuild = false;
-    stdenv = buildPackages.stdenv.override (old: rec {
+    stdenv = adaptStdenv (buildPackages.stdenv.override (old: rec {
       targetPlatform = crossSystem;
       allowedRequisites = null;
       hasCC = true;
@@ -50,7 +51,7 @@ in lib.init bootStages ++ [
       overrides = self: super: genAttrs (filter (a: ! any (b: hasPrefix b a) [
         "callPackage" "newScope" "pkgs" "stdenv" "system" "wrapBintools" "wrapCC"
       ]) (attrNames buildPackages)) (x: buildPackages."${x}");
-    });
+    }));
     allowCustomOverrides = true;
   })
 
