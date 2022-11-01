@@ -11,7 +11,17 @@ pkgs: super: with pkgs.lib; let
     zig-targets = with pkgs; (fromJSON (readFile (runCommand "targets" {} ''${zig}/bin/zig targets > $out''))).libc;
 
     # TODO: automate these for each zig version with github actions
-    broken = if args.allowBroken then [] else ([
+    broken = [
+      # Not supported by nixpkgs/systems/parse.nix
+      "csky-unknown-linux-gnueabi"
+      "csky-unknown-linux-gnueabihf"
+      "x86_64-unknown-linux-gnux32"
+      "armeb-unknown-linux-gnueabi"
+      "armeb-unknown-linux-musleabi"
+      "armeb-unknown-linux-gnueabihf"
+      "armeb-unknown-linux-musleabihf"
+      "armeb-w64-mingw32"
+    ] ++ optionals (!allowBroken) ([
       # error: container 'std.os.linux' has no member called 'syscall3'
       # https://github.com/ziglang/zig/issues/8020
       "mips64-unknown-linux-musl"
@@ -58,16 +68,6 @@ pkgs: super: with pkgs.lib; let
       # works, but not useful as a zigCross target
       # you can import it manually if you want
       "wasm32-unknown-none-musl"
-
-      # Not supported by nixpkgs/systems/parse.nix
-      "csky-unknown-linux-gnueabi"
-      "csky-unknown-linux-gnueabihf"
-      "x86_64-unknown-linux-gnux32"
-      "armeb-unknown-linux-gnueabi"
-      "armeb-unknown-linux-musleabi"
-      "armeb-unknown-linux-gnueabihf"
-      "armeb-unknown-linux-musleabihf"
-      "armeb-w64-mingw32"
     ] ++ optionals (zig.isMasterBuild or false) [
       "armv5tel-unknown-linux-musleabihf"
       # ld.lld: error: relocation R_386_PC32 cannot be used against symbol '__gehf2'; recompile with -fPIC
