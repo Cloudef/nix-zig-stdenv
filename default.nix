@@ -37,7 +37,8 @@ let
 
   # FIXME: get rid of this, used only to refer to local zig cc
   local0 = import pkgs.path {
-    inherit localSystem config;
+    inherit localSystem;
+    config = config // { allowUnsupportedSystem = true; };
     crossSystem = localSystem;
     stdenvStages = import ./src/stdenv.nix {
       inherit (pkgs) path;
@@ -48,7 +49,8 @@ let
 
   # Used to compile and install compatibility packages
   cross0 = import pkgs.path {
-    inherit localSystem crossSystem config;
+    inherit localSystem crossSystem;
+    config = config // { allowUnsupportedSystem = true; };
     stdenvStages = import ./src/stdenv.nix {
       inherit (pkgs) path;
       inherit (pkgs.llvmPackages) llvm;
@@ -57,7 +59,8 @@ let
   };
 
   cross-env = import pkgs.path {
-    inherit localSystem crossSystem config;
+    inherit localSystem crossSystem;
+    config = config // { allowUnsupportedSystem = true; };
 
     stdenvStages = import ./src/stdenv.nix {
       inherit (pkgs) path;

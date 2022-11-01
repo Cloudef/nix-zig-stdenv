@@ -37,8 +37,7 @@ in lib.init bootStages ++ [
       targetPkgs = buildPackages;
     };
   in {
-    inherit overlays;
-    config = config // { allowUnsupportedSystem = true; };
+    inherit config overlays;
     selfBuild = false;
     stdenv = adaptStdenv (buildPackages.stdenv.override (old: rec {
       targetPlatform = crossSystem;
@@ -67,7 +66,7 @@ in lib.init bootStages ++ [
       targetPkgs = cross0;
     };
   in {
-    config = config // { allowUnsupportedSystem = true; };
+    inherit config;
     overlays = overlays ++ crossOverlays;
     selfBuild = false;
     stdenv = adaptStdenv (buildPackages.stdenv.override (old: rec {
