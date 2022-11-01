@@ -68,9 +68,8 @@ let
   # Compatibility packages here:
   propagatedBuildInputs = with targetPkgs; if targetPkgs == {} then [] else []
   ++ optionals (targetSystem.parsed.kernel.name == "darwin") [
+    # TODO: zig seems to be missing <err.h>
     darwin.apple_sdk.frameworks.CoreFoundation
-    # XXX: zig seems to be missing <err.h>
-    darwin.Libsystem
   ];
   };
 in wrapCCWith rec {
