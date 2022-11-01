@@ -4,9 +4,10 @@ with builtins;
 
 pkgs: super: with pkgs.lib; let
   utils = import ./src/utils.nix { inherit (pkgs) lib; };
+  versions = import ./versions.nix { inherit pkgs; };
   zig = if args.zig != null then args.zig else super.zig;
 
-  targets = let
+  gen-targets = zig: let
     zig-targets = with pkgs; (fromJSON (readFile (runCommand "targets" {} ''${zig}/bin/zig targets > $out''))).libc;
 
     # TODO: automate these for each zig version with github actions
@@ -78,8 +79,20 @@ pkgs: super: with pkgs.lib; let
       "i386-w64-mingw32"
     ]);
   in filter (x: !(any (y: x == y) broken)) (map utils.zigTargetToNixTarget zig-targets);
+
+  gen-cross = zig: let
+    targets = gen-targets zig;
+    static-targets = targets ++ map (t: "${t}-static") targets;
+    import-target-pkgs = target: (import ./default.nix {
+      inherit pkgs target zig;
+      inherit (pkgs) config overlays;
+      static = hasSuffix "-static" target;
+    }).pkgs;
+  in genAttrs (targets ++ static-targets) import-target-pkgs;
 in {
-  inherit zig;
-  zigCross = genAttrs targets (target: (import ./default.nix { inherit pkgs target static zig; }).pkgs);
-  zigBinaries = import ./binaries.nix { inherit pkgs; };
+  zigCross = gen-cross zig;
+  zigVersions = mapAttrs (k: v: {
+    zig = v;
+    pkgs = gen-cross v;
+  }) (versions // { default = super.zig; });
 }

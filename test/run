@@ -1,0 +1,108 @@
+#!/bin/bash
+
+hash nix nix-build jq
+set -euo pipefail
+
+testdir="${TESTDIR:-result}"
+rm -rf "$testdir"
+
+c='\033[0;0m'
+r='\033[0;31m'
+g='\033[0;32m'
+w='\033[0;37m'
+
+eval-and-report() {
+   local name="$1" zig_version="$2" target="$3"
+   local desc="$zig_version-$target-$name"
+   local path="$(mktemp)"
+   local res="$(mktemp)"
+   shift 3
+   if "$@" 1>"$res" 2>"$path"; then
+      local out="$(cat "$res")"
+      local exe="$(find "$out/" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -print -quit)"
+      local fmt="$(file "$exe" | awk -F':' '{print $2}')"
+      printf -- "[$g OK $c] ${w}%s${c}\n" "$desc"
+      printf -- "      ${w}%s${c}\n" "$fmt"
+      rm -f "$path" "$res"
+   else
+      printf -- "[${r}FAIL${c}] ${w}%s${c}\n" "$desc"
+      mkdir -p "$testdir"
+      rm -f "$testdir/$desc" "$res"
+      mv "$path" "$testdir/$desc"
+   fi
+}
+
+dump() {
+   printf -- "${w}%s:${c}\n" "$1"
+   printf -- "${r}"
+   cat "$testdir/$1" | sed "s/^/> /"
+   printf -- "${c}"
+}
+
+dump-failed() {
+   [[ -d "$testdir" ]] || exit 0
+   printf -- "${r}\n"
+   printf -- '------------\n'
+   printf -- '- FAILURES -\n'
+   printf -- '------------\n'
+   printf -- "${c}\n"
+   local first=1
+   for f in "$testdir"/*; do
+      [[ $first == 0 ]] && printf -- '\n'; first=1
+      dump "$(basename "$f")"
+   done
+   exit 1
+}
+
+list-versions() {
+   nix eval --json -f default.nix list-versions | jq -r '.[]'
+}
+
+install-version() {
+   eval-and-report "zig" "$1" "native" nix-build --no-out-link -A install-version --argstr version "$1"
+}
+
+list-targets() {
+   nix eval --json -f default.nix zigVersions."\"$1\"".pkgs --apply builtins.attrNames | jq -r '.[]'
+}
+
+build-package() {
+   eval-and-report "$3" "$1" "$2" nix-build --no-out-link -A zigVersions."\"$1\"".pkgs."\"$2\"".\"$3\"
+}
+
+build-package-for-all-targets() {
+   list-targets "$1" | while read -r target; do
+      build-package "$1" "$target" "$2"
+   done
+}
+
+build-package-for-all-targets-and-versions() {
+   list-versions | while read -r ver; do
+      build-package-for-all-targets "$ver" "$1"
+   done
+}
+
+all_for_target() {
+   local ver="$1"
+   local target="$2"
+   p() { build-package "$ver" "$target" "$1"; }
+   p super-simple
+   p iniparser
+}
+
+all_for_version() {
+   list-targets "$1" | while read -r target; do
+      all_for_target "$1" "$target"
+   done
+}
+
+all() {
+   list-versions | while read -r ver; do
+      install-version "$ver"
+      list-targets "$ver" | while read -r target; do
+         all_for_target "$ver" "$target"
+      done
+   done
+}
+
+"$@" && dump-failed

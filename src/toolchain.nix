@@ -2,7 +2,7 @@
   utils,
   lib,
   writeShellScript,
-  linkFarm,
+  mkDerivation,
   emptyFile,
   wrapCCWith,
   wrapBintoolsWith,
@@ -10,7 +10,9 @@
   coreutils,
   llvm,
   zig,
-  targetSystem
+  localSystem,
+  targetSystem,
+  targetPkgs,
 }:
 
 with lib;
@@ -18,55 +20,85 @@ with builtins;
 
 let
   zig-target = utils.nixTargetToZigTarget targetSystem.parsed;
+  write-wrapper = cmd: writeShellScript "zig-${cmd}" ''${zig}/bin/zig ${cmd} "$@"'';
+  toolchain-unwrapped = let
+    prefix =
+    if localSystem.config != targetSystem.config
+    then "${targetSystem.config}-"
+    else "";
+  in mkDerivation {
+    name = "zig-toolchain";
+    inherit (zig) version;
 
-  wrap-toolchain = toolchain: wrapCCWith rec {
+    isClang = true;
+    dontUnpack = true;
+    dontConfigure = true;
+    dontBuild = true;
+    dontFixup = true;
+
+    installPhase = ''
+    mkdir -p $out/bin $out/lib
+    for prog in ${llvm}/bin/*; do
+      ln -sf $prog $out/bin/${prefix}$(basename $prog)
+    done
+
+    ln -s ${llvm}/bin/llvm-as $out/bin/${prefix}as
+    ln -s ${llvm}/bin/llvm-dwp $out/bin/${prefix}dwp
+    ln -s ${llvm}/bin/llvm-nm $out/bin/${prefix}nm
+    ln -s ${llvm}/bin/llvm-objcopy $out/bin/${prefix}objcopy
+    ln -s ${llvm}/bin/llvm-objdump $out/bin/${prefix}objdump
+    ln -s ${llvm}/bin/llvm-readelf $out/bin/${prefix}readelf
+    ln -s ${llvm}/bin/llvm-size $out/bin/${prefix}size
+    ln -s ${llvm}/bin/llvm-strip $out/bin/${prefix}strip
+    ln -s ${llvm}/bin/llvm-rc $out/bin/${prefix}windres
+
+    for f in ld ar ranlib dlltool lib; do
+      rm -f ${prefix}$f
+    done
+
+    ln -s ${write-wrapper "cc"} $out/bin/clang
+    ln -s ${write-wrapper "c++"} $out/bin/clang++
+    ln -s ${write-wrapper "ld"} $out/bin/${prefix}ld
+    ln -s ${write-wrapper "ar"} $out/bin/${prefix}ar
+    ln -s ${write-wrapper "ranlib"} $out/bin/${prefix}ranlib
+    ln -s ${write-wrapper "dlltool"} $out/bin/${prefix}dlltool
+    ln -s ${write-wrapper "lib"} $out/bin/${prefix}lib
+  '';
+
+  # Compatibility packages here:
+  propagatedBuildInputs = with targetPkgs; if targetPkgs == {} then [] else []
+  ++ optionals (targetSystem.parsed.kernel.name == "darwin") [
+    darwin.apple_sdk.frameworks.CoreFoundation
+    # XXX: zig seems to be missing <err.h>
+    darwin.Libsystem
+  ];
+  };
+in wrapCCWith rec {
+  inherit gnugrep coreutils;
+  cc = toolchain-unwrapped;
+  libc = toolchain-unwrapped;
+  libcxx = toolchain-unwrapped;
+
+  bintools = wrapBintoolsWith {
     inherit gnugrep coreutils;
-    cc = toolchain;
-    libc = toolchain;
-    libcxx = toolchain;
-
-    bintools = wrapBintoolsWith {
-      inherit libc gnugrep coreutils;
-      bintools = toolchain;
-      postLinkSignHook = emptyFile;
-      signingUtils = emptyFile;
-    };
-
-    # XXX: -march and -mcpu are not compatible
-    #      https://github.com/ziglang/zig/issues/4911
-    extraBuildCommands = ''
-      substituteInPlace $out/nix-support/add-local-cc-cflags-before.sh --replace "${targetSystem.config}" "${zig-target}"
-      sed -i 's/\([^ ]\)-\([^ ]\)/\1_\2/g' $out/nix-support/cc-cflags-before || true
-      sed -i 's/-arch [^ ]* *//g' $out/nix-support/cc-cflags || true
-    '' + (optionalString (
-      targetSystem.parsed.cpu.name == "aarch64" || targetSystem.parsed.cpu.name == "aarch64_be" ||
-      targetSystem.parsed.cpu.name == "armv5tel" || targetSystem.parsed.cpu.name == "mipsel") ''
-      # error: Unknown CPU: ...
-      sed -i 's/-march[^ ]* *//g' $out/nix-support/cc-cflags-before || true
-    '') + (optionalString (targetSystem.parsed.cpu.name == "s390x") ''
-      printf " -march=''${S390X_MARCH:-arch8}" >> $out/nix-support/cc-cflags-before
-    '');
+    bintools = toolchain-unwrapped;
+    libc = toolchain-unwrapped;
+    postLinkSignHook = emptyFile;
+    signingUtils = emptyFile;
   };
 
-  write-wrapper = cmd: writeShellScript "zig-${cmd}" ''${zig}/bin/zig ${cmd} "$@"'';
-
-  symlinks = [
-    { name = "bin/clang"; path = write-wrapper "cc"; }
-    { name = "bin/clang++"; path = write-wrapper "c++"; }
-    { name = "bin/ld"; path = write-wrapper "cc"; }
-    { name = "bin/ar"; path = write-wrapper "ar"; }
-    { name = "bin/ranlib"; path = write-wrapper "ranlib"; }
-    { name = "bin/dlltool"; path = write-wrapper "dlltool"; }
-    { name = "bin/lib"; path = write-wrapper "lib"; }
-    { name = "bin/windres"; path = "rc"; }
-  ] ++ map (x: { name = "bin/${x}"; path = "${llvm}/bin/llvm-${x}"; }) [
-    "addr2line" "as" "dwarfdump" "lipo" "install-name-tool" "nm" "objcopy" "objdump" "rc" "readelf" "size" "strings" "strip"
-  ] ++ map (x: { name = "bin/llvm-${x}"; path = "${llvm}/bin/llvm-${x}"; }) [
-    "cat" "cov" "c-test" "cfi-verify" "bcanalyzer" "cvtres" "cxxdump" "cxxfilt" "cxxmap" "diff" "dis" "dwp" "elfabi" "rtdyld"
-    "exegesis" "extract" "gsymutil" "ifs" "link" "lto" "lto2" "jitlink" "split" "stress" "symbolizer" "tblgen" "undname" "xray"
-    "opt-report" "pdbutil" "profdata" "mc" "mca" "ml" "modextract" "mt" "readobj" "reduce"
-  ];
-in wrap-toolchain ((linkFarm "zig-toolchain" symlinks) // {
-  inherit (zig) version;
-  isClang = true;
-})
+  # XXX: -march and -mcpu are not compatible
+  #      https://github.com/ziglang/zig/issues/4911
+  extraBuildCommands = ''
+    substituteInPlace $out/nix-support/add-local-cc-cflags-before.sh --replace "${targetSystem.config}" "${zig-target}"
+    sed -i 's/\([^ ]\)-\([^ ]\)/\1_\2/g' $out/nix-support/cc-cflags-before || true
+    sed -i 's/-arch [^ ]* *//g' $out/nix-support/cc-cflags || true
+  '' + (optionalString (
+    targetSystem.parsed.cpu.name == "aarch64" || targetSystem.parsed.cpu.name == "aarch64_be" ||
+    targetSystem.parsed.cpu.name == "armv5tel" || targetSystem.parsed.cpu.name == "mipsel") ''
+    # error: Unknown CPU: ...
+    sed -i 's/-march[^ ]* *//g' $out/nix-support/cc-cflags-before || true
+  '') + (optionalString (targetSystem.parsed.cpu.name == "s390x") ''
+    printf " -march=''${S390X_MARCH:-arch8}" >> $out/nix-support/cc-cflags-before
+  '');
+}

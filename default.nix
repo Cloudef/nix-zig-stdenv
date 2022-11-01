@@ -35,13 +35,23 @@ let
     inherit (pkgs) writeShellScript;
   };
 
+  # Used to compile and install compatibility packages
+  cross0 = import pkgs.path {
+    inherit localSystem crossSystem config;
+    stdenvStages = import ./src/stdenv.nix {
+      inherit (pkgs) path;
+      inherit (pkgs.llvmPackages) llvm;
+      inherit utils zig;
+    };
+  };
+
   cross-env = import pkgs.path {
     inherit localSystem crossSystem config;
 
     stdenvStages = import ./src/stdenv.nix {
       inherit (pkgs) path;
       inherit (pkgs.llvmPackages) llvm;
-      inherit utils zig;
+      inherit utils zig cross0;
     };
 
     # TODO: check if any of these are needed anymore

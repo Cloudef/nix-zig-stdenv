@@ -1,4 +1,4 @@
-name: update-zig-binaries
+name: update-versions
 
 on:
   schedule:
@@ -6,13 +6,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-zig-binaries:
+  update-versions:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: curl https://ziglang.org/download/index.json > zig-binaries.json
+      - run: curl https://ziglang.org/download/index.json > versions.json
       - uses: test-room-7/action-update-file@v1.6.0
         with:
-          file-path: zig-binaries.json
-          commit-msg: Update zig-binaries.json
+          file-path: versions.json
+          commit-msg: Update versions.json
           github-token: ${{ secrets.GITHUB_TOKEN }}

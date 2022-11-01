@@ -35,4 +35,4 @@ in if res == null then null else stdenv.mkDerivation {
     license = licenses.mit;
     platforms = platforms.unix;
   };
-}) (fromJSON (readFile ./zig-binaries.json)))
+}) (fromJSON (readFile ./versions.json)))

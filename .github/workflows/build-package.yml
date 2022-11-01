@@ -1,0 +1,67 @@
+name: build-package
+
+# TODO: generate this and other CI test files
+
+on:
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Zig version'
+        required: true
+        default: default
+        type: choice
+        options:
+          - default
+          - master
+          - 0.9.1
+      target:
+        description: 'Target'
+        required: true
+        default: aarch64-unknown-linux-musl
+        type: choice
+        options:
+          - aarch64-unknown-linux-musl
+          - all
+      package:
+        description: 'Package to build'
+        required: false
+        type: string
+        default: super-simple
+      allow_broken:
+        description: 'Do not use the target blacklist'
+        required: false
+        type: boolean
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Nix
+        uses: cachix/install-nix-action@v18
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - name: Build package
+        run: |
+          cd test
+          if [[ "$target" == all ]]; then
+            if [[ ! "$package" ]]; then
+              ./run all_for_version "$version"
+            else
+              ./run build-package-for-all-targets "$version" "$package"
+            fi
+          else
+            if [[ ! "$package" ]]; then
+              ./run all_for_target "$version" "$target"
+            else
+              ./run build-package "$version" "$target" "$package"
+            fi
+          fi
+        env:
+          version: ${{ inputs.version }}
+          target: ${{ inputs.target }}
+          package: ${{ inputs.package }}
+          allow_broken: ${{ inputs.allow_broken }}
+
