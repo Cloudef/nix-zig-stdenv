@@ -8,7 +8,7 @@ pkgs: super: with pkgs.lib; let
   zig = if args.zig != null then args.zig else super.zig;
 
   gen-targets = zig: let
-    zig-targets = with pkgs; (fromJSON (readFile (runCommand "targets" {} ''${zig}/bin/zig targets > $out''))).libc;
+    zig-targets = with pkgs; (fromJSON (readFile (runCommandLocal "targets" {} ''${zig}/bin/zig targets > $out''))).libc;
 
     # TODO: automate these for each zig version with github actions
     broken = [
