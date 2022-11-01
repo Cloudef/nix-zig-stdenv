@@ -74,6 +74,8 @@ let
     })] ++ overlays;
 
     crossOverlays = [(self: super: {
+      libcCross = zig;
+
       # XXX: broken on aarch64 at least
       gmp = super.gmp.overrideAttrs (old: {
         configureFlags = old.configureFlags ++ [ "--disable-assembly" ];
