@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> {}, lib ? pkgs.lib, stdenv ? pkgs.stdenv, system ? builtins.currentSystem }:
+{ pkgs ? import <nixpkgs> {}, lib ? pkgs.lib, stdenv ? pkgs.stdenvNoCC, system ? builtins.currentSystem }:
 
 with lib;
 with builtins;
