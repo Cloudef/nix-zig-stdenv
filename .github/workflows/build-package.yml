@@ -30,8 +30,9 @@ on:
         type: string
         default: super-simple
       allow_broken:
-        description: 'Do not use the target blacklist'
+        description: 'Allow broken targets'
         required: false
+        default: true
         type: boolean
 
 jobs:
