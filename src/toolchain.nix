@@ -24,6 +24,7 @@ let
 
   # FIXME: any quirks here should be fixed upstream
   #        meson: -Wl,--version
+  #        v8/gn: -latomic already built into compiler_rt, perhaps v8/gn just thinks we are gcc instead?
   write-cc-wrapper = cmd: writeShellScript "zig-${cmd}" ''
     args=()
     for v in "$@"; do
@@ -31,6 +32,7 @@ let
         echo "LLD 11.1.0 (compatible with GNU linkers)"
         exit 0
       fi
+      [[ "$v" == -latomic ]] && continue
       args+=("$v")
     done
     ${zig}/bin/zig ${cmd} "''${args[@]}"
