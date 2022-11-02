@@ -32,6 +32,7 @@ in lib.init bootStages ++ [
       inherit (buildPackages) wrapCCWith wrapBintoolsWith;
       inherit (buildPackages) writeShellScript emptyFile gnugrep coreutils;
       inherit (buildPackages.stdenv) mkDerivation;
+      inherit (buildPackages.stdenv.cc) libc;
       inherit localSystem utils lib zig llvm;
       targetSystem = localSystem;
       targetPkgs = buildPackages;
@@ -61,6 +62,7 @@ in lib.init bootStages ++ [
       inherit (buildPackages) wrapCCWith wrapBintoolsWith;
       inherit (buildPackages) writeShellScript emptyFile gnugrep coreutils;
       inherit (buildPackages.stdenv) mkDerivation;
+      inherit (buildPackages.stdenv.cc) libc;
       inherit localSystem utils lib zig llvm;
       targetSystem = crossSystem;
       targetPkgs = cross0;

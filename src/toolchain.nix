@@ -8,6 +8,7 @@
   wrapBintoolsWith,
   gnugrep,
   coreutils,
+  libc,
   llvm,
   zig,
   localSystem,
@@ -72,16 +73,14 @@ let
     darwin.apple_sdk.frameworks.CoreFoundation
   ];
   };
-in wrapCCWith rec {
-  inherit gnugrep coreutils;
+in wrapCCWith {
+  inherit gnugrep coreutils libc;
   cc = toolchain-unwrapped;
-  libc = toolchain-unwrapped;
   libcxx = toolchain-unwrapped;
 
   bintools = wrapBintoolsWith {
-    inherit gnugrep coreutils;
+    inherit gnugrep coreutils libc;
     bintools = toolchain-unwrapped;
-    libc = toolchain-unwrapped;
     postLinkSignHook = emptyFile;
     signingUtils = emptyFile;
   };
