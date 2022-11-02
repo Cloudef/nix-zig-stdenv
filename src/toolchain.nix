@@ -92,7 +92,6 @@ let
 in wrapCCWith {
   inherit gnugrep coreutils libc;
   cc = toolchain-unwrapped;
-  libcxx = toolchain-unwrapped;
 
   bintools = wrapBintoolsWith {
     inherit gnugrep coreutils libc;
