@@ -21,7 +21,23 @@ with builtins;
 
 let
   zig-target = utils.nixTargetToZigTarget targetSystem.parsed;
+
+  # FIXME: any quirks here should be fixed upstream
+  #        meson: -Wl,--version
+  write-cc-wrapper = cmd: writeShellScript "zig-${cmd}" ''
+    args=()
+    for v in "$@"; do
+      if [[ "$v" == -Wl,--version ]]; then
+        echo "LLD 11.1.0 (compatible with GNU linkers)"
+        exit 0
+      fi
+      args+=("$v")
+    done
+    ${zig}/bin/zig ${cmd} "''${args[@]}"
+    '';
+
   write-wrapper = cmd: writeShellScript "zig-${cmd}" ''${zig}/bin/zig ${cmd} "$@"'';
+
   toolchain-unwrapped = let
     prefix =
     if localSystem.config != targetSystem.config
