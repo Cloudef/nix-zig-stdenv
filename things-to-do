@@ -1,0 +1,2 @@
+#!/bin/sh
+nix-shell -p silver-searcher --run 'ag "(TODO|XXX|FIXME):"'
