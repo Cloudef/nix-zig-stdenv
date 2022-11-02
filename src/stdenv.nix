@@ -1,7 +1,6 @@
-{ path, utils, zig, llvm, cross0 ? {} }: { lib, localSystem, crossSystem, config, overlays, crossOverlays ? [] }:
+{ path, mk-zig-toolchain, native-toolchain ? null, targetPkgs ? null, libc ? null }: { lib, localSystem, crossSystem, config, overlays, crossOverlays ? [] }:
 
 with lib;
-with utils;
 
 let
   # XXX: Zig doesn't support response file. Nixpkgs wants to use this for clang
@@ -27,24 +26,14 @@ in lib.init bootStages ++ [
   # First replace native compiler with zig
   # This gives us more deterministic environment
   (buildPackages: let
-    adaptStdenv = if crossSystem.isStatic then buildPackages.stdenvAdapters.makeStatic else id;
-    zigToolchain = import ./toolchain.nix {
-      inherit (buildPackages) wrapCCWith wrapBintoolsWith;
-      inherit (buildPackages) writeShellScript emptyFile gnugrep coreutils;
-      inherit (buildPackages.stdenv) mkDerivation;
-      inherit (buildPackages.stdenv.cc) libc;
-      inherit localSystem utils lib zig llvm;
-      targetSystem = localSystem;
-      targetPkgs = buildPackages;
-    };
   in {
     inherit config overlays;
     selfBuild = false;
-    stdenv = adaptStdenv (buildPackages.stdenv.override (old: rec {
+    stdenv = (buildPackages.stdenv.override (old: rec {
       targetPlatform = crossSystem;
       allowedRequisites = null;
       hasCC = true;
-      cc = zigToolchain;
+      cc = native-toolchain;
       preHook = zig-prehook old.preHook localSystem;
       # Propagate everything to the next step as we do not need to bootstrap
       # We exclude packages that would break nixpkg's cross-compiling setup
@@ -58,15 +47,6 @@ in lib.init bootStages ++ [
   # Then use zig as a cross-compiler as well
   (buildPackages: let
     adaptStdenv = if crossSystem.isStatic then buildPackages.stdenvAdapters.makeStatic else id;
-    zigToolchain = import ./toolchain.nix {
-      inherit (buildPackages) wrapCCWith wrapBintoolsWith;
-      inherit (buildPackages) writeShellScript emptyFile gnugrep coreutils;
-      inherit (buildPackages.stdenv) mkDerivation;
-      inherit (buildPackages.stdenv.cc) libc;
-      inherit localSystem utils lib zig llvm;
-      targetSystem = crossSystem;
-      targetPkgs = cross0;
-    };
   in {
     inherit config;
     overlays = overlays ++ crossOverlays;
@@ -80,9 +60,13 @@ in lib.init bootStages ++ [
       # a different platform, and so are disabled.
       overrides = _: _: {};
       allowedRequisites = null;
-
       hasCC = true;
-      cc = zigToolchain;
+      cc = mk-zig-toolchain {
+        inherit (buildPackages) wrapCCWith wrapBintoolsWith;
+        inherit (buildPackages.stdenvNoCC) mkDerivation;
+        inherit targetPkgs libc;
+        targetSystem = crossSystem;
+      };
       preHook = zig-prehook old.preHook crossSystem;
 
       extraNativeBuildInputs = with buildPackages; old.extraNativeBuildInputs

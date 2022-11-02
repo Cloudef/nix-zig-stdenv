@@ -1,17 +1,10 @@
+{ utils, lib, writeShellScript, emptyFile, gnugrep, coreutils, localSystem, zig, llvm }:
+
 {
-  utils,
-  lib,
-  writeShellScript,
   mkDerivation,
-  emptyFile,
   wrapCCWith,
   wrapBintoolsWith,
-  gnugrep,
-  coreutils,
-  libc,
-  llvm,
-  zig,
-  localSystem,
+  libc ? null,
   targetSystem,
   targetPkgs,
 }:
@@ -22,12 +15,17 @@ with builtins;
 let
   zig-target = utils.nixTargetToZigTarget targetSystem.parsed;
 
-  # FIXME: any quirks here should be fixed upstream
+  # FIXME: some quirks here should be fixed upstream
   #        meson: -Wl,--version
+  #        v8/gn: inserts --target=, we do not want to ever compile to a platform we do not expect
   #        v8/gn: -latomic already built into compiler_rt, perhaps v8/gn just thinks we are gcc instead?
   write-cc-wrapper = cmd: writeShellScript "zig-${cmd}" ''
     args=()
+    skip_next=0
     for v in "$@"; do
+      [[ $skip_next == 1 ]] && { skip_next=0; continue; }
+      [[ "$v" == -target ]] && { skip_next=1; continue; }
+      [[ "$v" == --target=* ]] && continue
       if [[ "$v" == -Wl,--version ]]; then
         echo "LLD 11.1.0 (compatible with GNU linkers)"
         exit 0
@@ -35,8 +33,8 @@ let
       [[ "$v" == -latomic ]] && continue
       args+=("$v")
     done
-    ${zig}/bin/zig ${cmd} "''${args[@]}"
-    '';
+    ${zig}/bin/zig ${cmd} -target ${zig-target} "''${args[@]}"
+  '';
 
   write-wrapper = cmd: writeShellScript "zig-${cmd}" ''${zig}/bin/zig ${cmd} "$@"'';
 
@@ -71,25 +69,24 @@ let
       ln -s ${llvm}/bin/llvm-strip $out/bin/${prefix}strip
       ln -s ${llvm}/bin/llvm-rc $out/bin/${prefix}windres
 
-      for f in ld ar ranlib dlltool lib; do
+      for f in ar ranlib dlltool lib; do
         rm -f ${prefix}$f
       done
 
       ln -s ${write-cc-wrapper "cc"} $out/bin/clang
       ln -s ${write-cc-wrapper "c++"} $out/bin/clang++
-      ln -s ${write-wrapper "ld"} $out/bin/${prefix}ld
       ln -s ${write-wrapper "ar"} $out/bin/${prefix}ar
       ln -s ${write-wrapper "ranlib"} $out/bin/${prefix}ranlib
       ln -s ${write-wrapper "dlltool"} $out/bin/${prefix}dlltool
       ln -s ${write-wrapper "lib"} $out/bin/${prefix}lib
     '';
 
-  # Compatibility packages here:
-  propagatedBuildInputs = with targetPkgs; if targetPkgs == {} then [] else []
-  ++ optionals (targetSystem.parsed.kernel.name == "darwin") [
-    # TODO: zig seems to be missing <err.h>
-    darwin.apple_sdk.frameworks.CoreFoundation
-  ];
+    # Compatibility packages here:
+    propagatedBuildInputs = [] ++ optionals (isAttrs targetPkgs) (with targetPkgs; []
+    ++ optionals (targetSystem.parsed.kernel.name == "darwin") [
+      # TODO: zig seems to be missing <err.h>
+      darwin.apple_sdk.frameworks.CoreFoundation
+    ]);
   };
 in wrapCCWith {
   inherit gnugrep coreutils libc;
@@ -105,7 +102,7 @@ in wrapCCWith {
   # XXX: -march and -mcpu are not compatible
   #      https://github.com/ziglang/zig/issues/4911
   extraBuildCommands = ''
-    substituteInPlace $out/nix-support/add-local-cc-cflags-before.sh --replace "${targetSystem.config}" "${zig-target}"
+    rm -f $out/nix-support/add-local-cc-flags.before.sh
     sed -i 's/\([^ ]\)-\([^ ]\)/\1_\2/g' $out/nix-support/cc-cflags-before || true
     sed -i 's/-arch [^ ]* *//g' $out/nix-support/cc-cflags || true
   '' + (optionalString (
