@@ -53,9 +53,5 @@ in wrapper [ rust-toolchain ] [
       '';
     path = "bin/cargo";
   }
-  {
-    script = ''${target-cc.bintools}/bin/strip "$@"'';
-    path = "bin/strip";
-  }
 ]
 
