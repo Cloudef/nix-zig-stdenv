@@ -14,6 +14,29 @@ r='\033[0;31m'
 g='\033[0;32m'
 w='\033[0;37m'
 
+is_dry_run=0
+
+args=()
+nix_build_args=(--no-out-link)
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+       nix_build_args+=("$1")
+       is_dry_run=1
+       shift
+       ;;
+    -o|--out-link)
+      nix_build_args+=("$1" "$2")
+      shift; shift
+      ;;
+    *)
+      args+=("$1")
+      shift
+      ;;
+  esac
+done
+set -- "${args[@]}"
+
 eval-and-report() {
    local name="$1" zig_version="$2" target="$3"
    local desc="$zig_version-$target-$name"
@@ -23,11 +46,15 @@ eval-and-report() {
    shift 3
    if "$@" 1>"$res" 2>"$path"; then
       local out exe fmt
-      out="$(cat "$res")"
-      exe="$(find "$out/" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -print -quit)"
-      fmt="$(file "$exe" | awk -F':' '{print $2}')"
       printf -- "[$g OK $c] ${w}%s${c}\n" "$desc"
-      printf -- "      ${w}%s${c}\n" "$fmt"
+      if [[ $is_dry_run == 0 ]]; then
+         out="$(<"$res")"
+         exe="$(find "$out/" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -print -quit)"
+         fmt="$(file "$exe" | awk -F':' '{print $2}')"
+         printf -- "      ${w}%s${c}\n" "$fmt"
+      else
+         sed "s/^/> /" "$path"
+      fi
       rm -f "$path" "$res"
    else
       printf -- "[${r}FAIL${c}] ${w}%s${c}\n" "$desc"
@@ -62,7 +89,7 @@ list-versions() {
 }
 
 install-version() {
-   eval-and-report "zig" "$1" "native" nix-build "$scriptdir/default.nix" --no-out-link -A install-version --argstr version "$1"
+   eval-and-report "zig" "$1" "native" nix-build "${nix_build_args[@]}" "$scriptdir/default.nix" -A install-version --argstr version "$1"
 }
 
 list-targets() {
@@ -70,7 +97,7 @@ list-targets() {
 }
 
 build-package() {
-   eval-and-report "$3" "$1" "$2" nix-build "$scriptdir/default.nix" --no-out-link -A zigVersions."\"$1\".pkgs.\"$2\".\"$3\""
+   eval-and-report "$3" "$1" "$2" nix-build "${nix_build_args[@]}" "$scriptdir/default.nix" -A zigVersions."\"$1\".pkgs.\"$2\".\"$3\""
 }
 
 build-package-for-all-targets() {
