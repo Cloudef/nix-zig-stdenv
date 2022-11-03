@@ -82,18 +82,23 @@ pkgs: super: with pkgs.lib; let
 
   gen-cross = zig: let
     targets = gen-targets zig;
-    static-targets = targets ++ map (t: "${t}-static") targets;
-    import-target-pkgs = target: (import ./default.nix {
-      inherit pkgs zig;
-      inherit (pkgs) config overlays;
-      static = hasSuffix "-static" target;
-      target = removeSuffix "-static" target;
-    }).pkgs;
-  in genAttrs (targets ++ static-targets) import-target-pkgs;
+    is-static-supported = target: let
+      inherit (systems.elaborate target) parsed;
+    in parsed.kernel.name != "darwin";
+    static-targets = map (t: "${t}-static") (filter is-static-supported targets);
+    import-target = target: let
+      set = (import ./default.nix {
+        inherit pkgs zig;
+        inherit (pkgs) config overlays;
+        static = hasSuffix "-static" target;
+        target = removeSuffix "-static" target;
+      });
+    in { inherit (set) pkgs; };
+  in genAttrs (targets ++ static-targets) import-target;
 in {
   zigCross = gen-cross zig;
   zigVersions = mapAttrs (k: v: {
     zig = v;
-    pkgs = gen-cross v;
+    targets = gen-cross v;
   }) (versions // { default = super.zig; });
 }

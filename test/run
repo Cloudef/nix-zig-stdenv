@@ -93,11 +93,11 @@ install-version() {
 }
 
 list-targets() {
-   nix eval --json -f "$scriptdir/default.nix" zigVersions."\"$1\"".pkgs --apply builtins.attrNames | jq -r '.[]'
+   nix eval --json -f "$scriptdir/default.nix" zigVersions."\"$1\"".targets --apply builtins.attrNames | jq -r '.[]'
 }
 
 build-package() {
-   eval-and-report "$3" "$1" "$2" nix-build "${nix_build_args[@]}" "$scriptdir/default.nix" -A zigVersions."\"$1\".pkgs.\"$2\".\"$3\""
+   eval-and-report "$3" "$1" "$2" nix-build "${nix_build_args[@]}" "$scriptdir/default.nix" -A zigVersions."\"$1\".targets.\"$2\".pkgs.\"$3\""
 }
 
 build-package-for-all-targets() {

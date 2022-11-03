@@ -28,7 +28,7 @@ let
 in with layer; with layer.lib; {
   inherit zigVersions;
   list-versions = attrNames zigVersions;
-  list-targets = { version }: attrNames zigVersions.${version}.pkgs;
+  list-targets = { version }: attrNames zigVersions.${version}.targets;
   install-version = { version }: zigVersions."${version}".zig;
-  build-package = { version, target, package }: zigVersions."${version}".pkgs."${target}"."${package}";
+  build-package = { version, target, package }: zigVersions."${version}".targets."${target}".pkgs."${package}";
 }
