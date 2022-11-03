@@ -90,7 +90,6 @@ let
     propagatedBuildInputs = [] ++ optionals (isAttrs targetPkgs) (with targetPkgs; []
     ++ optionals (targetSystem.parsed.kernel.name == "darwin") [
       # TODO: zig seems to be missing <err.h>
-      darwin.apple_sdk.frameworks.CoreFoundation
     ]);
   };
 in wrapCCWith {
