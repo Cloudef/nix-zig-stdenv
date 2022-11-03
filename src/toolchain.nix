@@ -20,18 +20,23 @@ let
   #        v8/gn: inserts --target=, we do not want to ever compile to a platform we do not expect
   #        v8/gn: -latomic already built into compiler_rt, perhaps v8/gn just thinks we are gcc instead?
   write-cc-wrapper = cmd: writeShellScript "zig-${cmd}" ''
+    shopt -s extglob
     args=()
-    skip_next=0
-    for v in "$@"; do
-      [[ $skip_next == 1 ]] && { skip_next=0; continue; }
-      [[ "$v" == -target ]] && { skip_next=1; continue; }
-      [[ "$v" == --target=* ]] && continue
-      if [[ "$v" == -Wl,--version ]]; then
-        echo "LLD 11.1.0 (compatible with GNU linkers)"
-        exit 0
-      fi
-      [[ "$v" == -latomic ]] && continue
-      args+=("$v")
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        -Wl,--version)
+          echo "LLD 11.1.0 (compatible with GNU linkers)"
+          exit 0;;
+        -target)
+          shift;shift;;
+        --target=*)
+          shift;;
+        -latomic)
+          shift;;
+        *)
+          args+=("$1")
+          shift;;
+      esac
     done
     ${zig}/bin/zig ${cmd} -target ${zig-target} "''${args[@]}"
   '';

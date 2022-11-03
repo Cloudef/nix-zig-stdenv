@@ -5,17 +5,20 @@ with builtins;
 
 rust-toolchain: host-cc: host: target-cc: target: let
   cc-wrapper = target: cc: writeShellScript "rust-cc-${target}" ''
+      shopt -s extglob
       args=()
-      for v in "$@"; do
-        [[ "$v" == *self-contained/crt1.o ]] && continue
-        [[ "$v" == *self-contained/crti.o ]] && continue
-        [[ "$v" == *self-contained/crtn.o ]] && continue
-        [[ "$v" == *self-contained/crtend.o ]] && continue
-        [[ "$v" == *self-contained/crtbegin.o ]] && continue
-        [[ "$v" == *self-contained/libc.a ]] && continue
-        [[ "$v" == -lc ]] && continue
-        [[ "$v" == -liconv ]] && continue
-        args+=("$v")
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          */self-contained/crt@([1in]|begin|end).o)
+            shift;;
+          */self-contained/libc.a)
+            shift;;
+          -lc|-liconv)
+            shift;;
+          *)
+            args+=("$1")
+            shift;;
+        esac
       done
       export ZIG_LOCAL_CACHE_DIR="$TMPDIR/zig-cache-${target}-rust"
       export ZIG_GLOBAL_CACHE_DIR="$ZIG_LOCAL_CACHE_DIR"
