@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: curl https://ziglang.org/download/index.json > versions.json
+      - run: curl https://ziglang.org/download/index.json > meta/versions.json
       - uses: test-room-7/action-update-file@v1.6.0
         with:
-          file-path: versions.json
-          commit-msg: Update versions.json
+          file-path: meta/versions.json
+          commit-msg: Update meta/versions.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
