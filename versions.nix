@@ -29,6 +29,15 @@ in if res == null then null else stdenv.mkDerivation {
     install -Dm755 zig $out/bin/zig
   '';
 
+  passthru = {
+    release-date = v.date;
+    release-notes = v.notes;
+    stdDocs = v.stdDocs or null;
+    docs = v.docs;
+    size = res.size;
+    src = v.src;
+  };
+
   meta = with lib; {
     homepage = "https://ziglang.org/";
     description = "General-purpose programming language and toolchain for maintaining robust, optimal, and reusable software";
