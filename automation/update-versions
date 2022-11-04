@@ -1,0 +1,3 @@
+#!/bin/sh
+[ -d meta ] || exit 1
+curl https://ziglang.org/download/index.json > meta/versions.json

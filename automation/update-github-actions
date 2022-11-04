@@ -1,0 +1,7 @@
+#!/bin/sh
+hash jq || exit 1
+[ -d meta ] && [ -d automation ] && [ -d .github/workflows ] || exit 1
+ws() { grep -o "[ ]*@$1@" automation/build-package.template.yml | sed "s/@$1@//"; }
+export targets="$(nix eval --json -f automation/default.nix targets | jq -r '.[]' | sort | sed "s/^/$(ws targets)- /")"
+export versions="$(nix eval --json -f automation/default.nix versions | jq -r '.[]' | sort -Vr | sed "s/^/$(ws versions)- /")"
+awk '{ for (a in ENVIRON) gsub("[ ]*@" _ a _ "@",ENVIRON[a]); print }' < automation/build-package.template.yml > .github/workflows/build-package.yml

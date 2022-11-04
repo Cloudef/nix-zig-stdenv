@@ -13,19 +13,10 @@
 with lib;
 
 let
-  to-system = x: systems.elaborate ({ config = x; isStatic = static; }
-  // optionalAttrs (hasSuffix "mingw32" x) { libc = "msvcrt"; }
-  // optionalAttrs (hasSuffix "darwin" x) { libc = "libSystem"; }
-  // optionalAttrs (hasSuffix "wasi" x) { libc = "wasilibc"; }
-  // optionalAttrs (hasInfix "musl" x) { libc = "musl"; }
-  // optionalAttrs (hasInfix "gnu" x) { libc = "glibc"; }
-  );
-
-  localSystem = pkgs.buildPlatform;
-  crossSystem = if isAttrs args.target then target else to-system target;
-  config = (args.config or {}) // { allowUnsupportedSystem = localSystem.config != crossSystem.config; };
-
   utils = import ./src/utils.nix { inherit lib; };
+  localSystem = pkgs.buildPlatform;
+  crossSystem = if isAttrs args.target then target else utils.targetToNixSystem target static;
+  config = (args.config or {}) // { allowUnsupportedSystem = localSystem.config != crossSystem.config; };
 
   wrapper = import ./src/wrapper.nix {
     inherit lib;

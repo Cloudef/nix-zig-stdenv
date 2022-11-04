@@ -1,0 +1,26 @@
+name: update-meta
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-meta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Nix
+        uses: cachix/install-nix-action@v18
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - run: |
+          automation/update-versions
+          automation/update-github-actions
+      - uses: test-room-7/action-update-file@v1.6.0
+        with:
+          file-path: |
+            meta/*.json
+            .github/workflows/*.yml
+          commit-msg: Update metadata
+          github-token: ${{ secrets.GH_TOKEN }}

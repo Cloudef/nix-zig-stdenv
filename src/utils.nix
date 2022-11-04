@@ -33,4 +33,12 @@ with lib;
       armv5tel = s: "thumb-${removePrefix "armv5tel-" s}";
     };
   in cpu."${target.cpu.name}" or (_: _) (kernel."${target.kernel.name}" target);
+
+  targetToNixSystem = target: isStatic: systems.elaborate ({ config = target; inherit isStatic; }
+  // optionalAttrs (hasSuffix "mingw32" target) { libc = "msvcrt"; }
+  // optionalAttrs (hasSuffix "darwin" target) { libc = "libSystem"; }
+  // optionalAttrs (hasSuffix "wasi" target) { libc = "wasilibc"; }
+  // optionalAttrs (hasInfix "musl" target) { libc = "musl"; }
+  // optionalAttrs (hasInfix "gnu" target) { libc = "glibc"; }
+  );
 }
