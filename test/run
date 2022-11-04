@@ -4,7 +4,7 @@
 set -euo pipefail
 hash nix nix-build jq
 
-scriptdir="$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)"
+scriptdir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 testdir="${TESTDIR:-result}"
 rm -rf "$testdir"
