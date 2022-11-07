@@ -5,15 +5,15 @@
   overlays ? [],
   crossOverlays ? [],
   zig ? pkgs.zig,
-  static ? true,
+  utils ? import ./src/utils.nix { inherit lib; },
   target ? builtins.currentSystem,
+  static ? utils.supportsStatic target,
   ...
 } @args:
 
 with lib;
 
 let
-  utils = import ./src/utils.nix { inherit lib; };
   localSystem = pkgs.buildPlatform;
   crossSystem = if isAttrs args.target then target else utils.targetToNixSystem target static;
   config = (args.config or {}) // { allowUnsupportedSystem = localSystem.config != crossSystem.config; };

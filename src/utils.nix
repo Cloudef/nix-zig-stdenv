@@ -2,7 +2,7 @@
 
 with lib;
 
-{
+rec {
   zigTargetToNixTarget = target: let
     kernel = {
       freestanding = l: "${head l}-unknown-none-${last l}";
@@ -34,11 +34,19 @@ with lib;
     };
   in cpu."${target.cpu.name}" or (_: _) (kernel."${target.kernel.name}" target);
 
-  targetToNixSystem = target: isStatic: systems.elaborate ({ config = target; inherit isStatic; }
+  elaborate = system: let
+    target = system.config;
+  in systems.elaborate (system
   // optionalAttrs (hasSuffix "mingw32" target) { libc = "msvcrt"; }
   // optionalAttrs (hasSuffix "darwin" target) { libc = "libSystem"; }
   // optionalAttrs (hasSuffix "wasi" target) { libc = "wasilibc"; }
   // optionalAttrs (hasInfix "musl" target) { libc = "musl"; }
   // optionalAttrs (hasInfix "gnu" target) { libc = "glibc"; }
   );
+
+  targetToNixSystem = target: isStatic: elaborate ({ config = target; inherit isStatic; });
+
+  supportsStatic = target: let
+    inherit (systems.elaborate target) parsed;
+  in parsed.kernel.name != "darwin";
 }
