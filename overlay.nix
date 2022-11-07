@@ -82,10 +82,7 @@ pkgs: super: with pkgs.lib; let
 
   gen-cross = zig: let
     targets = gen-targets zig;
-    is-static-supported = target: let
-      inherit (systems.elaborate target) parsed;
-    in parsed.kernel.name != "darwin";
-    static-targets = map (t: "${t}-static") (filter is-static-supported targets);
+    static-targets = map (t: "${t}-static") (filter utils.supportsStatic targets);
     import-target = target: let
       set = (import ./default.nix {
         inherit pkgs zig;
