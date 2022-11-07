@@ -1,0 +1,12 @@
+#!/bin/sh
+[ -d meta ] || exit 1
+
+all() {
+   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target x86_64-unknown-linux-gnu
+   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target x86_64-apple-darwin
+   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target aarch64-unknown-linux-gnu
+   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target aarch64-unknown-linux-musl
+   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target aarch64-apple-darwin
+}
+
+all | sort -u > /meta/nixpkgs

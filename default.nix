@@ -28,6 +28,10 @@ let
     inherit (pkgs) writeShellScript;
   };
 
+  prebuilt = import ./src/prebuilt.nix {
+    inherit pkgs crossSystem;
+  };
+
   mk-zig-toolchain = import ./src/toolchain.nix {
     inherit (pkgs) writeShellScript emptyFile gnugrep coreutils;
     inherit (pkgs.llvmPackages) llvm;
@@ -44,18 +48,20 @@ let
   };
 
   libc = let
-    cross0 = import pkgs.path {
+    # For compiling libc from scratch
+    # Not used if there's prebuilt libc available
+    cross0 = (import pkgs.path {
       inherit localSystem crossSystem config;
       stdenvStages = import ./src/stdenv.nix {
         inherit (pkgs) path;
         inherit mk-zig-toolchain native-toolchain;
       };
-    };
-    lib = with cross0.pkgs; {
+    }).pkgs;
+    lib = {
       msvcrt = null;
       libSystem = null;
       wasilibc = null;
-      musl = musl.overrideAttrs(o: {
+      musl = prebuilt.musl.dynamic or cross0.musl.overrideAttrs(o: {
         outputs = [ "out" ];
         CFLAGS = []; # -fstrong-stack-protection is not allowed
         separateDebugInfo = false;
@@ -64,7 +70,7 @@ let
       # XXX: glibc does not compile with anything else than GNU tools while you can compile to
       #      glibc platforms, you won't be able to execute cross-compiled binaries inside a
       #      qemu-static-user environment for example
-      glibc = if localSystem == crossSystem then glibc else null; # callPackage "${pkgs.path}/pkgs/development/libraries/glibc" {};
+      glibc = prebuilt.glibc.dynamic or null;
     };
   in lib."${crossSystem.libc}" or (throw "Could not understand the required libc for target: ${target}");
 
@@ -109,4 +115,5 @@ in {
   target = crossSystem.config;
   pkgs = cross-env;
   wrapRustToolchain = toolchain: rust-wrapper toolchain native-toolchain localSystem.config cross-env.stdenv.cc crossSystem.config;
+  experimental = { inherit prebuilt; };
 }
