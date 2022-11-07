@@ -15,7 +15,7 @@ with lib;
 
 let
   localSystem = pkgs.buildPlatform;
-  crossSystem = if isAttrs args.target then target else utils.targetToNixSystem target static;
+  crossSystem = if isAttrs target then utils.elaborate target else utils.targetToNixSystem target static;
   config = (args.config or {}) // { allowUnsupportedSystem = localSystem.config != crossSystem.config; };
 
   wrapper = import ./src/wrapper.nix {
