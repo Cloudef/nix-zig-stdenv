@@ -1,0 +1,38 @@
+{
+  "x86_64-apple-darwin": [
+    "glib",
+    "SDL",
+    "glfw"
+  ],
+  "x86_64-apple-darwin-static": [],
+  "aarch64-apple-darwin": [
+    "glib",
+    "SDL",
+    "glfw"
+  ],
+  "aarch64-apple-darwin-static": [],
+  "x86_64-unknown-linux-gnu": [
+    "musl",
+    "glibc",
+    "glib",
+    "SDL",
+    "glfw"
+  ],
+  "x86_64-unknown-linux-gnu-static": [],
+  "x86_64-unknown-linux-musl": [
+    "musl"
+  ],
+  "x86_64-unknown-linux-musl-static": [],
+  "aarch64-unknown-linux-gnu": [
+    "musl",
+    "glibc",
+    "glib",
+    "SDL",
+    "glfw"
+  ],
+  "aarch64-unknown-linux-gnu-static": [],
+  "aarch64-unknown-linux-musl": [
+    "musl"
+  ],
+  "aarch64-unknown-linux-musl-static": []
+}

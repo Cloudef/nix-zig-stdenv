@@ -61,16 +61,16 @@ let
       msvcrt = null;
       libSystem = null;
       wasilibc = null;
-      musl = prebuilt.musl.dynamic or cross0.musl.overrideAttrs(o: {
+      musl = prebuilt.dynamic.musl or (cross0.musl.overrideAttrs(o: {
         outputs = [ "out" ];
         CFLAGS = []; # -fstrong-stack-protection is not allowed
         separateDebugInfo = false;
         postInstall = "ln -rs $out/lib/libc.so $out/lib/libc.musl-${crossSystem.parsed.cpu.name}.so.1";
-      });
+      }));
       # XXX: glibc does not compile with anything else than GNU tools while you can compile to
       #      glibc platforms, you won't be able to execute cross-compiled binaries inside a
       #      qemu-static-user environment for example
-      glibc = prebuilt.glibc.dynamic or null;
+      glibc = prebuilt.dynamic.glibc or null;
     };
   in lib."${crossSystem.libc}" or (throw "Could not understand the required libc for target: ${target}");
 

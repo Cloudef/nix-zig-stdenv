@@ -1,4 +1,4 @@
-{ target, utilsp ? ./utils.nix }:
+{ target }:
 
 let
   nixpkgs = builtins.fetchTarball {
@@ -6,7 +6,7 @@ let
     sha256 = "0d643wp3l77hv2pmg2fi7vyxn4rwy0iyr8djcw1h5x72315ck9ik";
   };
   pkgs = import nixpkgs {};
-  utils = import utilsp { inherit (pkgs) lib; };
+  utils = import ./utils.nix { inherit (pkgs) lib; };
   isStatic = with pkgs.lib; hasSuffix "-static" target;
   localSystem = with pkgs.lib; utils.targetToNixSystem (removeSuffix "-static" target) isStatic;
 in with pkgs.lib; import nixpkgs {

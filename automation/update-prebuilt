@@ -1,12 +1,29 @@
 #!/bin/sh
-[ -d meta ] || exit 1
+[ -d meta ] && [ -d automation ] || exit 1
 
-all() {
-   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target x86_64-unknown-linux-gnu
-   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target x86_64-apple-darwin
-   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target aarch64-unknown-linux-gnu
-   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target aarch64-unknown-linux-musl
-   nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target aarch64-apple-darwin
+pkgs() {
+   for target in "$@"; do
+      while read -r pkg; do
+         nix-env -qabP --no-name -f src/prebuilt-derive-from.nix --argstr target "$target" -A "$pkg"
+      done < automation/prebuilt | jq --raw-input --slurp '{'"\"$target\""': split("\n") | map(select(. != ""))}'
+   done
 }
 
-all | sort -u > meta/nixpkgs
+gather() {
+   while read -r target; do
+      if [ $target != *-apple-darwin ]; then
+         pkgs "$target" "$target-static"
+      else
+         pkgs "$target"
+      fi
+   done | jq --slurp add
+}
+
+cat <<EOF | gather > meta/prebuilt.json
+x86_64-apple-darwin
+aarch64-apple-darwin
+x86_64-unknown-linux-gnu
+x86_64-unknown-linux-musl
+aarch64-unknown-linux-gnu
+aarch64-unknown-linux-musl
+EOF

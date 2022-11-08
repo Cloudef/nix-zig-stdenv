@@ -21,7 +21,6 @@ jobs:
       - uses: test-room-7/action-update-file@v1.6.0
         with:
           file-path: |
-            meta/nixpkgs
             meta/*.json
             .github/workflows/*.yml
           commit-msg: Update metadata
