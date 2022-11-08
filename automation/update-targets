@@ -1,0 +1,14 @@
+#!/bin/sh
+hash jq || exit 1
+[ -d meta ] && [ -d automation ] && [ -d 'test' ] || exit 1
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+jq -r 'keys[]' < meta/broken-targets.json | sort | grep -v 'master' > "$tmpdir/cached"
+nix eval --json -f automation/default.nix zigVersions --apply builtins.attrNames | jq -r '.[]' | sort | grep -v 'default' > "$tmpdir/current"
+comm -1 "$tmpdir/cached" "$tmpdir/current" | while read -r ver; do
+   TEST_TIMEOUT=1m ./test/run build-package-for-all-targets "$ver" super-simple > /dev/null
+   if [ -d test/result ]; then
+      find test/result -type f -exec basename {} \; | sed -e "s/$ver-//" -e 's/-super-simple//' |\
+         jq --raw-input --slurp '{'"\"$ver\""': split("\n") | map(select(. != ""))}'
+   fi
+done | jq --slurp add > meta/broken-targets.json

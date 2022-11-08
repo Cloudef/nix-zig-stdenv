@@ -18,6 +18,7 @@ jobs:
           automation/update-prebuilt
           automation/update-versions
           automation/update-github-actions
+          automation/update-targets
       - uses: test-room-7/action-update-file@v1.6.0
         with:
           file-path: |
