@@ -6,7 +6,7 @@ hash nix nix-build jq
 
 scriptdir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
-testdir="${TESTDIR:-result}"
+testdir="${TESTDIR:-"$scriptdir/result"}"
 rm -rf "$testdir"
 
 c='\033[0;0m'
