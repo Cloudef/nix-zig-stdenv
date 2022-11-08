@@ -56,15 +56,17 @@ eval-and-report() {
       shift 3
       if timeout "${TEST_TIMEOUT:-15m}" "$@" 1>"$res" 2>"$path"; then
          local out exe fmt
-         printf -- "[$g OK $c] ${w}%s${c}\n" "$desc"
-         if [[ $is_dry_run == 0 ]]; then
-            out="$(<"$res")"
-            exe="$(find "$out/" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -print -quit)"
-            fmt="$(file "$exe" | awk -F':' '{print $2}')"
-            printf -- "      ${w}%s${c}\n" "$fmt"
-         else
-            sed "s/^/> /" "$path"
-         fi
+         info() {
+            if [[ $is_dry_run == 0 ]]; then
+               out="$(<"$res")"
+               exe="$(find "$out/" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -print -quit)"
+               fmt="$(file "$exe" | awk -F':' '{print $2}')"
+               printf -- "      ${w}%s${c}" "$fmt"
+            else
+               sed "s/^/> /" "$path"
+            fi
+         }
+         printf -- "[$g OK $c] ${w}%s${c}\n%s\n" "$desc" "$(info)"
          rm -f "$path" "$res"
       else
          printf -- "[${r}FAIL${c}] ${w}%s${c}\n" "$desc"
