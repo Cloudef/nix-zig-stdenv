@@ -6,6 +6,7 @@ hash nix nix-build jq
 
 scriptdir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
+NUM_JOBS="${NUM_JOBS:-$(nproc)}"
 testdir="${TESTDIR:-"$scriptdir/result"}"
 rm -rf "$testdir"
 
@@ -37,31 +38,43 @@ while [[ $# -gt 0 ]]; do
 done
 set -- "${args[@]}"
 
+njobs() {
+   jobs -rp | wc -w
+}
+
+waitforjobs() {
+   while [[ "$(njobs)" -gt "$1" ]]; do wait -n 2>/dev/null || sleep 1; done
+}
+
 eval-and-report() {
-   local name="$1" zig_version="$2" target="$3"
-   local desc="$zig_version-$target-$name"
-   local path res
-   path="$(mktemp)"
-   res="$(mktemp)"
-   shift 3
-   if timeout ${TEST_TIMEOUT:-15m} "$@" 1>"$res" 2>"$path"; then
-      local out exe fmt
-      printf -- "[$g OK $c] ${w}%s${c}\n" "$desc"
-      if [[ $is_dry_run == 0 ]]; then
-         out="$(<"$res")"
-         exe="$(find "$out/" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -print -quit)"
-         fmt="$(file "$exe" | awk -F':' '{print $2}')"
-         printf -- "      ${w}%s${c}\n" "$fmt"
+   job() {
+      local name="$1" zig_version="$2" target="$3"
+      local desc="$zig_version-$target-$name"
+      local path res
+      path="$(mktemp)"
+      res="$(mktemp)"
+      shift 3
+      if timeout ${TEST_TIMEOUT:-15m} "$@" 1>"$res" 2>"$path"; then
+         local out exe fmt
+         printf -- "[$g OK $c] ${w}%s${c}\n" "$desc"
+         if [[ $is_dry_run == 0 ]]; then
+            out="$(<"$res")"
+            exe="$(find "$out/" -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -print -quit)"
+            fmt="$(file "$exe" | awk -F':' '{print $2}')"
+            printf -- "      ${w}%s${c}\n" "$fmt"
+         else
+            sed "s/^/> /" "$path"
+         fi
+         rm -f "$path" "$res"
       else
-         sed "s/^/> /" "$path"
+         printf -- "[${r}FAIL${c}] ${w}%s${c}\n" "$desc"
+         mkdir -p "$testdir"
+         rm -f "$testdir/$desc" "$res"
+         mv "$path" "$testdir/$desc"
       fi
-      rm -f "$path" "$res"
-   else
-      printf -- "[${r}FAIL${c}] ${w}%s${c}\n" "$desc"
-      mkdir -p "$testdir"
-      rm -f "$testdir/$desc" "$res"
-      mv "$path" "$testdir/$desc"
-   fi
+   }
+   waitforjobs "$NUM_JOBS"
+   job "$@" &
 }
 
 dump() {
@@ -70,7 +83,7 @@ dump() {
 }
 
 dump-failed() {
-   [[ -d "$testdir" ]] || exit 0
+   [[ -d "$testdir" ]] || return 0
    printf -- "${r}\n"
    printf -- '------------\n'
    printf -- '- FAILURES -\n'
@@ -81,7 +94,7 @@ dump-failed() {
       [[ $first == 0 ]] && printf -- '\n'; first=1
       dump "$(basename "$f")"
    done
-   exit 1
+   return 1
 }
 
 list-versions() {
@@ -135,4 +148,8 @@ all() {
    done
 }
 
-"$@" && dump-failed
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+"$@"
+waitforjobs 0
+trap - SIGINT SIGTERM EXIT
+dump-failed
