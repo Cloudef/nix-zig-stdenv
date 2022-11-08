@@ -44,7 +44,7 @@ eval-and-report() {
    path="$(mktemp)"
    res="$(mktemp)"
    shift 3
-   if "$@" 1>"$res" 2>"$path"; then
+   if timeout ${TEST_TIMEOUT:-15m} "$@" 1>"$res" 2>"$path"; then
       local out exe fmt
       printf -- "[$g OK $c] ${w}%s${c}\n" "$desc"
       if [[ $is_dry_run == 0 ]]; then
