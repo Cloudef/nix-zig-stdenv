@@ -9,4 +9,4 @@ all() {
    nix-env -qaP --no-name -f src/prebuilt-derive-from.nix --argstr target aarch64-apple-darwin
 }
 
-all | sort -u > /meta/nixpkgs
+all | sort -u > meta/nixpkgs
