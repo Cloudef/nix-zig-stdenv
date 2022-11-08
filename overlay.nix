@@ -5,7 +5,7 @@ with builtins;
 pkgs: super: with pkgs.lib; let
   utils = import ./src/utils.nix { inherit (pkgs) lib; };
   versions = import ./versions.nix { inherit pkgs; };
-  zig = if hasAttr "zig" args then args.zig else super.zig;
+  zig = if args ? zig then args.zig else super.zig;
 
   gen-targets = zig: let
     zig-targets = with pkgs; (fromJSON (readFile (runCommandLocal "targets" {} ''${zig}/bin/zig targets > $out''))).libc;
