@@ -14,11 +14,10 @@ jobs:
         uses: cachix/install-nix-action@v18
         with:
           nix_path: nixpkgs=channel:nixos-unstable
-      - run: |
-          automation/update-prebuilt
-          automation/update-versions
-          automation/update-github-actions
-          automation/update-targets
+      - run: automation/update-prebuilt
+      - run: automation/update-versions
+      - run: automation/update-github-actions
+      - run: automation/update-targets
       - uses: test-room-7/action-update-file@v1.6.0
         with:
           file-path: |
