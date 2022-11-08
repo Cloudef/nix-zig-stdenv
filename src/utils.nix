@@ -15,6 +15,7 @@ rec {
       powerpc64 = s: "${s}abi64";
       sparcv9 = s: "sparc64-${removePrefix "sparcv9-" s}";
       thumb = s: "armv5tel-${removePrefix "thumb-" s}";
+      x86 = s: "i386-${removePrefix "x86-" s}";
     };
     split = splitString "-" target;
   in cpu."${head split}" or (_: _) (kernel."${elemAt split 1}" split);
@@ -31,6 +32,7 @@ rec {
       powerpc64 = s: removeSuffix "abi64" s;
       sparc64 = s: "sparcv9-${removePrefix "sparc64-" s}";
       armv5tel = s: "thumb-${removePrefix "armv5tel-" s}";
+      i386 = s: "x86-${removePrefix "i386-" s}";
     };
   in cpu."${target.cpu.name}" or (_: _) (kernel."${target.kernel.name}" target);
 
