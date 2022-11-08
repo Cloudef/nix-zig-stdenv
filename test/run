@@ -43,7 +43,7 @@ njobs() {
 }
 
 waitforjobs() {
-   while [[ "$(njobs)" -gt "$1" ]]; do wait -n 2>/dev/null || sleep 1; done
+   while [[ "$(njobs)" -gt "$1" ]]; do sleep 1; done
 }
 
 eval-and-report() {
@@ -117,15 +117,15 @@ build-package() {
 }
 
 build-package-for-all-targets() {
-   list-targets "$1" | while read -r target; do
+   while read -r target; do
       build-package "$1" "$target" "$2"
-   done
+   done < <(list-targets "$1")
 }
 
 build-package-for-all-targets-and-versions() {
-   list-versions | while read -r ver; do
+   while read -r ver; do
       build-package-for-all-targets "$ver" "$1"
-   done
+   done < <(list-versions)
 }
 
 all_for_target() {
@@ -137,18 +137,18 @@ all_for_target() {
 }
 
 all_for_version() {
-   list-targets "$1" | while read -r target; do
+   while read -r target; do
       all_for_target "$1" "$target"
-   done
+   done < <(list-targets "$1")
 }
 
 all() {
-   list-versions | while read -r ver; do
+   while read -r ver; do
       install-version "$ver"
-      list-targets "$ver" | while read -r target; do
+      while read -r target; do
          all_for_target "$ver" "$target"
-      done
-   done
+      done < <(list-targets "$ver")
+   done < <(list-versions)
 }
 
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
