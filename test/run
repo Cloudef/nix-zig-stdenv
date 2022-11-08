@@ -69,7 +69,8 @@ eval-and-report() {
          printf -- "[$g OK $c] ${w}%s${c}\n%s\n" "$desc" "$(info)"
          rm -f "$path" "$res"
       else
-         printf -- "[${r}FAIL${c}] ${w}%s${c}\n" "$desc"
+         [[ $? == 124 ]] && reason=SLOW || reason=FAIL
+         printf -- "[${r}%s${c}] ${w}%s${c}\n" "$reason" "$desc"
          mkdir -p "$testdir"
          rm -f "$testdir/$desc" "$res"
          mv "$path" "$testdir/$desc"
