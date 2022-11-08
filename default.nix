@@ -111,6 +111,7 @@ let
     })] ++ crossOverlays;
   };
 in {
+  inherit static;
   inherit (cross-env) stdenv;
   target = crossSystem.config;
   pkgs = cross-env;
