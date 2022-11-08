@@ -1,8 +1,9 @@
-#!/bin/sh
-[ -d meta ] && [ -d automation ] || exit 1
+#!/bin/bash
+[[ -d meta ]] && [[ -d automation ]] || exit 1
 
 pkgs() {
    for target in "$@"; do
+      printf 'processing %s ...\n' "$target" 1>&2
       while read -r pkg; do
          nix-env -qabP --no-name -f src/prebuilt-derive-from.nix --argstr target "$target" -A "$pkg"
       done < automation/prebuilt | jq --raw-input --slurp '{'"\"$target\""': split("\n") | map(select(. != ""))}'
@@ -11,7 +12,7 @@ pkgs() {
 
 gather() {
    while read -r target; do
-      if [ $target != *-apple-darwin ]; then
+      if [[ "$target" != *-apple-darwin ]]; then
          pkgs "$target" "$target-static"
       else
          pkgs "$target"

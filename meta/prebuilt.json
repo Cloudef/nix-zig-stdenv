@@ -4,13 +4,11 @@
     "SDL",
     "glfw"
   ],
-  "x86_64-apple-darwin-static": [],
   "aarch64-apple-darwin": [
     "glib",
     "SDL",
     "glfw"
   ],
-  "aarch64-apple-darwin-static": [],
   "x86_64-unknown-linux-gnu": [
     "musl",
     "glibc",
