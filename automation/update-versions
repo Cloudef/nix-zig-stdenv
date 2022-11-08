@@ -1,5 +1,5 @@
 #!/bin/sh
 [ -d meta ] || exit 1
 curl https://ziglang.org/download/index.json |\
-   jq 'with_entries(select(.key != "0.1.1" and .key != "0.2.0" and .key != "0.3.0" and .key != "0.4.0" and .key != "0.5.0"))' \
+   jq 'with_entries(select(.key != "0.1.1" and .key != "0.2.0" and .key != "0.3.0" and .key != "0.4.0" and .key != "0.5.0" and .key != "0.6.0" and .key != "0.7.0" and .key != "0.7.1"))' \
    > meta/versions.json
