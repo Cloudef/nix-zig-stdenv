@@ -132,11 +132,6 @@ on:
         required: false
         type: string
         default: super-simple
-      allow_broken:
-        description: 'Allow broken targets'
-        required: false
-        default: true
-        type: boolean
 
 jobs:
   build-package:
@@ -167,5 +162,3 @@ jobs:
           version: ${{ inputs.version }}
           target: ${{ inputs.target }}
           package: ${{ inputs.package }}
-          allow_broken: ${{ inputs.allow_broken }}
-

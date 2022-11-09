@@ -109,7 +109,7 @@ install-version() {
 }
 
 list-targets() {
-   nix eval --json -f "$scriptdir/default.nix" zigVersions."\"$1\"".targets --apply builtins.attrNames | jq -r '.[]'
+   nix eval --json -f "$scriptdir/default.nix" --arg allow-broken false zigVersions."\"$1\"".targets --apply builtins.attrNames | jq -r '.[]'
 }
 
 build-package() {
