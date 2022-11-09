@@ -16,6 +16,7 @@ g='\033[0;32m'
 w='\033[0;37m'
 
 is_dry_run=0
+allow_broken=false
 
 args=()
 nix_build_args=(--no-out-link)
@@ -27,13 +28,17 @@ while [[ $# -gt 0 ]]; do
        shift
        ;;
     -o|--out-link)
-      nix_build_args+=("$1" "$2")
-      shift; shift
-      ;;
+       nix_build_args+=("$1" "$2")
+       shift; shift
+       ;;
+    --allow-broken)
+       allow_broken=true
+       shift
+       ;;
     *)
-      args+=("$1")
-      shift
-      ;;
+       args+=("$1")
+       shift
+       ;;
   esac
 done
 set -- "${args[@]}"
@@ -109,7 +114,7 @@ install-version() {
 }
 
 list-targets() {
-   nix eval --json -f "$scriptdir/default.nix" --arg allow-broken false zigVersions."\"$1\"".targets --apply builtins.attrNames | jq -r '.[]'
+   nix eval --json -f "$scriptdir/default.nix" --arg allow-broken $allow_broken zigVersions."\"$1\"".targets --apply builtins.attrNames | jq -r '.[]'
 }
 
 build-package() {
