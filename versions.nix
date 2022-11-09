@@ -10,7 +10,6 @@ in filterAttrs (n: v: v != null) (mapAttrs (k: v: let
 in if res == null then null else stdenv.mkDerivation {
   pname = "zig";
   version = if k == "master" then v.version else k;
-  isMasterBuild = k == "master";
 
   src = pkgs.fetchurl {
     url = res.tarball;
@@ -30,6 +29,7 @@ in if res == null then null else stdenv.mkDerivation {
   '';
 
   passthru = {
+    isMasterBuild = k == "master";
     release-date = v.date;
     release-notes = v.notes;
     stdDocs = v.stdDocs or null;
