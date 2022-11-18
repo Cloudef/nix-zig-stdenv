@@ -8,6 +8,7 @@
   utils ? import ./src/utils.nix { inherit lib; },
   target ? builtins.currentSystem,
   static ? utils.supportsStatic target,
+  without-libc ? false,
   ...
 } @args:
 
@@ -72,7 +73,7 @@ let
       #      qemu-static-user environment for example
       glibc = prebuilt.dynamic.glibc or null;
     };
-  in lib."${crossSystem.libc}" or (throw "Could not understand the required libc for target: ${target}");
+  in if without-libc then null else lib."${crossSystem.libc}" or (throw "Could not understand the required libc for target: ${target}");
 
   # Used to compile and install compatibility packages
   targetPkgs = import pkgs.path {
