@@ -354,8 +354,6 @@
     "armv5tel-unknown-linux-musleabihf-static",
     "i386-unknown-linux-musl",
     "i386-unknown-linux-musl-static",
-    "i386-w64-mingw32",
-    "i386-w64-mingw32-static",
     "m68k-unknown-linux-gnu",
     "m68k-unknown-linux-gnu-static",
     "m68k-unknown-linux-musl",
