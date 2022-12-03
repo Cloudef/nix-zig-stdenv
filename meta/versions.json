@@ -1,48 +1,53 @@
 {
   "master": {
-    "version": "0.11.0-dev.426+fc3142aa9",
-    "date": "2022-12-01",
+    "version": "0.11.0-dev.449+665eba93c",
+    "date": "2022-12-02",
     "docs": "https://ziglang.org/documentation/master/",
     "stdDocs": "https://ziglang.org/documentation/master/std/",
     "src": {
-      "tarball": "https://ziglang.org/builds/zig-0.11.0-dev.426+fc3142aa9.tar.xz",
-      "shasum": "925781c2a1a48cdedc2339409fa12a801d639760120e8b7cfd537c28f2278476",
-      "size": "15130232"
+      "tarball": "https://ziglang.org/builds/zig-0.11.0-dev.449+665eba93c.tar.xz",
+      "shasum": "26ed80cd42858303e3acd958287c69857122f2f4a9029083819fcb9e78c06e46",
+      "size": "15129100"
     },
     "x86_64-macos": {
-      "tarball": "https://ziglang.org/builds/zig-macos-x86_64-0.11.0-dev.426+fc3142aa9.tar.xz",
-      "shasum": "9c9cab53af5b4bfadb8ffc6c2ecaf36fec08adac92bf04728549e28dd58b8f55",
-      "size": "45229300"
+      "tarball": "https://ziglang.org/builds/zig-macos-x86_64-0.11.0-dev.449+665eba93c.tar.xz",
+      "shasum": "616065ccc9ded516090faae3ce51722ff810b3ee7e8b67b876c6e9cb20804b0a",
+      "size": "45221608"
     },
     "aarch64-macos": {
-      "tarball": "https://ziglang.org/builds/zig-macos-aarch64-0.11.0-dev.426+fc3142aa9.tar.xz",
-      "shasum": "4a720c4d38ec93b21f4a705021f6033e84e67e9a252a509c185e79043db7ba74",
-      "size": "40603512"
+      "tarball": "https://ziglang.org/builds/zig-macos-aarch64-0.11.0-dev.449+665eba93c.tar.xz",
+      "shasum": "483a6ae5ccbe9da9e29123aa9e7db3b1deb7edecaa886268d8f3f2f2d40f7d37",
+      "size": "40606332"
     },
     "x86_64-windows": {
-      "tarball": "https://ziglang.org/builds/zig-windows-x86_64-0.11.0-dev.426+fc3142aa9.zip",
-      "shasum": "d97b03a8251b458231b90e2be6e1877430132b6eb30db782e8ca07030d00ff6c",
-      "size": "73981505"
+      "tarball": "https://ziglang.org/builds/zig-windows-x86_64-0.11.0-dev.449+665eba93c.zip",
+      "shasum": "efcc220ea07008f616a3f89b21d8bec184cea6ccad24d3f644bee7035700dd7e",
+      "size": "73978133"
     },
     "x86_64-linux": {
-      "tarball": "https://ziglang.org/builds/zig-linux-x86_64-0.11.0-dev.426+fc3142aa9.tar.xz",
-      "shasum": "faf19659a84b7de6ffc5ef57737483a1936467163923316c5d74f6f5ba55a205",
-      "size": "44163020"
+      "tarball": "https://ziglang.org/builds/zig-linux-x86_64-0.11.0-dev.449+665eba93c.tar.xz",
+      "shasum": "a70065641acbbb6331a10b1ab333f4e6fa0d7e41042a0dd50cb99a2fa5d0442c",
+      "size": "44163728"
     },
     "aarch64-linux": {
-      "tarball": "https://ziglang.org/builds/zig-linux-aarch64-0.11.0-dev.426+fc3142aa9.tar.xz",
-      "shasum": "2228a3413183966a28d46733e1960d314f85c778f0dac11bd37ba6e4bd64f1ba",
-      "size": "40398764"
+      "tarball": "https://ziglang.org/builds/zig-linux-aarch64-0.11.0-dev.449+665eba93c.tar.xz",
+      "shasum": "2d3a85a7d55c9559f2999472d32b126e10a3c4f1b9a7a4c6adf2c5df83cc5b54",
+      "size": "40395852"
     },
     "aarch64-windows": {
-      "tarball": "https://ziglang.org/builds/zig-windows-aarch64-0.11.0-dev.426+fc3142aa9.zip",
-      "shasum": "c1b2897996809288b9fb9d495e7e405d71e49a8fb1148a33f4c8b6811cb8dbb3",
-      "size": "70013420"
+      "tarball": "https://ziglang.org/builds/zig-windows-aarch64-0.11.0-dev.449+665eba93c.zip",
+      "shasum": "9baf7808405300411bf395586f0087f12944f141788b926c99941cf76ff9b37a",
+      "size": "70007405"
     },
     "riscv64-linux": {
-      "tarball": "https://ziglang.org/download/0.10.0/zig-linux-riscv64-0.11.0-dev.426+fc3142aa9.tar.xz",
-      "shasum": "217c607ade115a55292ee591de20440a78f0c8fc4aabd81f687a5482e56a7108",
-      "size": "42205656"
+      "tarball": "https://ziglang.org/builds/zig-linux-riscv64-0.11.0-dev.449+665eba93c.tar.xz",
+      "shasum": "226cc2d3810995d2b81023ec2efed6a5ae47e5db244ffe878588baf2ccfe2b23",
+      "size": "42212616"
+    },
+    "x86-linux": {
+      "tarball": "https://ziglang.org/builds/zig-linux-x86-0.11.0-dev.449+665eba93c.tar.xz",
+      "shasum": "8a15e46112b054afb215a21d26c84f1b5683c3ea2195334980a972a07007d88e",
+      "size": "48405956"
     }
   },
   "0.10.0": {
