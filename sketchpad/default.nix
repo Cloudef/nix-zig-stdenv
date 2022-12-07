@@ -35,7 +35,7 @@ let
 
   # defaults
   zig = (import ../versions.nix {})."${zig-version}";
-  cross = import ./.. { inherit pkgs zig target static; };
+  cross = import ./.. { inherit pkgs zig target static without-libc; };
   buildRustPackage = (naersk-for-zig zig).buildPackage;
 in {
   # minimal glib, the default in nixpkgs is quite large and needs a lot of stuff
