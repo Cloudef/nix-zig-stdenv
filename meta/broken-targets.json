@@ -377,8 +377,6 @@
     "sparc64-unknown-linux-gnu",
     "sparc64-unknown-linux-gnu-static",
     "wasm32-unknown-none-musl",
-    "wasm32-unknown-none-musl-static",
-    "wasm32-unknown-wasi",
-    "wasm32-unknown-wasi-static"
+    "wasm32-unknown-none-musl-static"
   ]
 }
