@@ -27,6 +27,13 @@ let
         -Wl,--version)
           echo "LLD 11.1.0 (compatible with GNU linkers)"
           exit 0;;
+        -Wl,--no-undefined-version)
+          shift;;
+        -Wl,--unresolved-symbols=ignore-in-object-files)
+          args+=("-Wl,-undefined,dynamic_lookup")
+          shift;;
+        -Wl,--unresolved-symbols=*)
+          shift;;
         -target)
           shift;shift;;
         --target=*)
